@@ -4,6 +4,29 @@ This repository provides from-scratch implementation of linear and non-linear cl
 
 This project highlights the limitations of early models.
 
+## Exploring Algorithm Limits
+
+This project demonstrates the necessity of each algorithm by pushing them to their limits using edge-case datasets.
+
+### 1. The Hard Margin Trap (Outliers)
+When a single outlier breaks linear separability, a Hard Margin SVM cannot mathematically converge. The **Soft Margin SVM** utilizes the Hinge Loss function with L2 regularization to allow margin violations, maintaining a logical decision boundary.
+
+![Soft SVM Outlier Handling](assets/scenario1_outlier.png)
+
+### 2. The Linear Limit (Moons Dataset)
+Linear classifiers inherently fail on data that requires a curved boundary. 
+
+![Soft SVM Failing on Moons](assets/scenario2_linear_limit.png)
+
+By applying the **Sequential Minimal Optimization (SMO)** algorithm with a **Gaussian Kernel**, the SVM projects the data into a higher-dimensional space.
+
+![Kernel SVM on Moons](assets/scenario2_gaussian_moons.png)
+
+### 3. The Ultimate Test (Concentric Circles)
+The **Gaussian Kernel** proves its extreme flexibility on datasets where classes enclose one another, completely separating the inner and outer circles.
+
+![Kernel SVM on Circles](assets/scenario3_gaussian_circles.png)
+
 ## Implemented Algorithms
 
 The project is structured around four core implementations:
