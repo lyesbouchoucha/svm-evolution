@@ -1,12 +1,12 @@
 # svm-evolution-from-scratch
 
-This repository provides a from-scratch implementation of linear and non-linear classifiers using Python and NumPy. The objective of this project is to demonstrate the mathematical and algorithmic progression that led to modern Support Vector Machines (SVM). 
+This repository provides from-scratch implementation of linear and non-linear classifiers using Python and NumPy. The objective of this project is to demonstrate the mathematical and algorithmic progression that led to modern Support Vector Machines. 
 
-This project builds the algorithms step-by-step, highlighting the limitations of early models and how subsequent mathematical innovations resolved them.
+This project highlights the limitations of early models.
 
 ## Implemented Algorithms
 
-The project is structured around four core implementations, each addressing a specific mathematical challenge:
+The project is structured around four core implementations:
 
 1. **Perceptron (`src/perceptron.py`)**
    * Implements the classic error-driven learning algorithm.
@@ -21,7 +21,7 @@ The project is structured around four core implementations, each addressing a sp
    * **Limitation:** While robust to noise and outliers, it is still restricted to linear decision boundaries.
 
 4. **Kernel SVM with SMO Algorithm (`src/svm_smo.py` & `src/kernels.py`)**
-   * Solves the dual optimization problem using John Platt's Sequential Minimal Optimization (SMO) algorithm.
+   * Solves the dual optimization problem using Sequential Minimal Optimization (SMO) algorithm.
    * Leverages the Kernel Trick (Linear, Polynomial, and Gaussian) to project data into higher dimensions, allowing the model to learn complex, non-linear decision boundaries.
 
 ## Repository Structure
