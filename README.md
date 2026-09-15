@@ -1,4 +1,4 @@
-# svm-evolution-from-scratch
+# svm-evolution
 
 This repository provides from-scratch implementation of linear and non-linear classifiers using Python and NumPy. The objective of this project is to demonstrate the mathematical and algorithmic progression that led to modern Support Vector Machines. 
 
