@@ -13,8 +13,8 @@ from sklearn.preprocessing import StandardScaler
 
 from src.base import NotSeparableError
 from src.perceptron import Perceptron
-from src.svm_hard import HardSVM
-from src.svm_soft_sgd import SoftSVM
+from src.hard_svm import HardSVM
+from src.soft_svm import SoftSVM
 from src.svm_smo import KernelSVM
 from src.kernels import rbf_kernel
 
