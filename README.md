@@ -12,11 +12,11 @@ The project is structured around four core implementations:
    * Implements the classic error-driven learning algorithm.
    * **Limitation:** Finds any separating hyperplane without optimizing for the margin, leading to poor generalization. It fails to converge on non-linearly separable data.
 
-2. **Hard Margin SVM (`src/svm_hard.py`)**
+2. **Hard Margin SVM (`src/hard_svm.py`)**
    * Introduces margin maximization. The objective is updated to ensure data points are not just correctly classified, but lie outside a defined margin.
    * **Limitation:** Strictly requires linearly separable data. The presence of outliers or overlapping classes prevents convergence.
 
-3. **Soft Margin SVM (`src/svm_soft_sgd.py`)**
+3. **Soft Margin SVM (`src/soft_svm.py`)**
    * Introduces the Hinge Loss function and an L2 regularization term to allow for misclassifications (soft margin). Optimized using Stochastic Gradient Descent (SGD).
    * **Limitation:** While robust to noise and outliers, it is still restricted to linear decision boundaries.
 
