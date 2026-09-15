@@ -29,11 +29,12 @@ The project is structured around four core implementations:
 ```text
 .
 ├── src/
+│   ├── base.py             # Base class for all classifiers (NotImplementedError pattern)
 │   ├── perceptron.py       # Standard Perceptron implementation
 │   ├── svm_hard.py         # Hard Margin SVM 
 │   ├── svm_soft_sgd.py     # Soft Margin SVM optimized via SGD
 │   ├── svm_smo.py          # Dual SVM optimized via SMO algorithm
-│   └── kernels.py          # Linear, Polynomial, and gaussian kernel functions
+│   └── kernels.py          # Linear, Polynomial, and RBF kernel functions
 ├── notebooks/
 │   └── demonstrations.ipynb # Visualizations of decision boundaries and margins
 ├── tests/
