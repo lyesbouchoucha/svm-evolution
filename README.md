@@ -11,9 +11,7 @@ video had not answered.
 
 The first was about the constraint itself. Every derivation writes
 
-```
-y_i (w · x_i + b) >= 1
-```
+$$y_i (w \cdot x_i + b) \geq 1$$
 
 and moves on. Why `1`? Why a threshold at all, rather than simply asking that
 the points be on the correct side? The second question was about what happens
