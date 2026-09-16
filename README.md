@@ -77,7 +77,7 @@ One solution, not many. The dashed lines are the margin, and the three circled
 points are the only ones touching it — the support vectors. Moving any other
 point does nothing at all.
 
-## Step 3 — The soft margin, because "no solution" is a real outcome
+## Step 3 — The soft margin, "no solution" is a real outcome
 
 Drop a single point inside the opposite class and the constraints become
 impossible to satisfy simultaneously. Not slow to satisfy: impossible. The
@@ -92,8 +92,9 @@ no (w, b) satisfies y_i (w . x_i + b) >= 1 for every i.
 Slack variables relax the constraints to $y_i f(x_i) \geq 1 - \xi_i$ with $\xi_i \geq 0$. Eliminating
 them at the optimum leaves an unconstrained objective:
 
-$$\min_{w, b} \ \lambda \lVert w \rVert^2
-+ \frac{1}{n} \sum_{i=1}^{n} \max\bigl(0, \, 1 - y_i f(x_i)\bigr)$$
+$$
+\min_{w, b} \ \lambda \lVert w \rVert^2 + \frac{1}{n} \sum_{i=1}^{n} \max\bigl(0, 1 - y_i f(x_i)\bigr)
+$$
 
 That second term is the hinge loss — so the hinge loss *is* the soft margin
 formulation, with the slacks removed. Violations are priced and the boundary survives the outlier:
