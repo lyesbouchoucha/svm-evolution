@@ -2,7 +2,7 @@
 
 From-scratch implementations in NumPy of the four classifiers that led to the
 modern Support Vector Machine: the perceptron, the hard margin SVM, the soft
-margin SVM, and the kernel SVM trained by Sequential Minimal Optimization.
+margin SVM and the kernel SVM trained by Sequential Minimal Optimization.
 
 ## How this project started
 
@@ -20,7 +20,7 @@ prediction actually computes — and for a kernel SVM, where no explicit `w`
 exists, that turns out to be the more interesting half of the story.
 
 Looking for answers took me backwards rather than forwards. I ended up reading
-about the perceptron, working through the linear algebra behind it, and drawing
+about the perceptron, working through the linear algebra behind it and drawing
 what each iteration does to the vector `w` geometrically. That raised a third
 question: if the perceptron already finds a separating hyperplane, why invent
 the SVM at all?
@@ -53,7 +53,7 @@ Both are perfect classifiers of the training set. Both would generalise
 differently on the next point that arrives. That ambiguity is what the SVM
 removes.
 
-## Step 2 — The hard margin, and why the threshold is 1
+## Step 2 — The hard margin and why the threshold is 1
 
 Here is the answer to my first question. A hyperplane is invariant under
 rescaling: `(w, b)` and `(kw, kb)` describe the same set for any `k > 0`. So
