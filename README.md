@@ -56,18 +56,20 @@ removes.
 ## Step 2 — The hard margin and why the threshold is 1
 
 Here is the answer to my first question. A hyperplane is invariant under
-rescaling: `(w, b)` and `(kw, kb)` describe the same set for any `k > 0`. So
-asking for `y_i (w · x_i + b) >= c` is the *same* constraint whatever positive
-`c` you pick — you are only choosing how to normalise `w`. Fixing `c = 1` pins
+rescaling: $(w, b)$ and $(kw, kb)$ describe the same set for any $k > 0$. So
+asking for $y_i (w \cdot x_i + b) \geq c$ is the *same* constraint whatever positive
+$c$ you pick — you are only choosing how to normalise $w$. Fixing $c = 1$ pins
 that scale, and once it is pinned the margin has a closed form:
 
-```
-margin = 1 / ||w||
-```
+$$\text{margin} = \frac{1}{\lVert w \rVert}$$
 
-Maximising the margin becomes minimising `||w||^2`, and the whole thing is a
-quadratic program with linear constraints. The threshold is a normalisation,
-not a modelling decision.
+Maximising the margin becomes minimising $\lVert w \rVert^2$, and the whole thing is a
+quadratic program with linear constraints:
+
+$$\min_{w, b} \ \tfrac{1}{2} \lVert w \rVert^2
+\quad \text{subject to} \quad y_i (w \cdot x_i + b) \geq 1 \ \ \forall i$$
+
+The threshold is a normalisation, not a modelling decision.
 
 ![Hard margin SVM](figures/00_hard_svm.png)
 
@@ -87,16 +89,14 @@ NotSeparableError: The data is not linearly separable:
 no (w, b) satisfies y_i (w . x_i + b) >= 1 for every i.
 ```
 
-Slack variables relax the constraints to `y_i f(x_i) >= 1 - xi_i`. Eliminating
+Slack variables relax the constraints to $y_i f(x_i) \geq 1 - \xi_i$ with $\xi_i \geq 0$. Eliminating
 them at the optimum leaves an unconstrained objective:
 
-```
-minimise  lambda ||w||^2 + (1/n) sum_i max(0, 1 - y_i f(x_i))
-```
+$$\min_{w, b} \ \lambda \lVert w \rVert^2
++ \frac{1}{n} \sum_{i=1}^{n} \max\bigl(0, \, 1 - y_i f(x_i)\bigr)$$
 
 That second term is the hinge loss — so the hinge loss *is* the soft margin
-formulation, with the slacks removed. Violations are now priced instead of
-forbidden, and the boundary survives the outlier:
+formulation, with the slacks removed. Violations are priced and the boundary survives the outlier:
 
 ![Soft margin SVM with an outlier](figures/01_soft_svm_outlier.png)
 
@@ -112,29 +112,29 @@ honest best and plateaus:
 ![Soft margin on moons](figures/02_soft_svm_moons.png)
 
 The way out is to change space rather than to change line. Lifting the data
-through a feature map `phi` can make it linearly separable — here
-`phi(x) = (x1, x2, x1^2 + x2^2)` turns two concentric circles into two clouds
+through a feature map $\varphi$ can make it linearly separable — here
+$\varphi(x) = (x_1, x_2, x_1^2 + x_2^2)$ turns two concentric circles into two clouds
 at different heights, separated by an ordinary plane:
 
 ![The kernel trick in three dimensions](figures/04_kernel_trick.png)
 
 The problem is that useful feature spaces get large fast, and the gaussian one
 is infinite-dimensional. This is where the dual formulation earns its place:
-written in terms of the multipliers `alpha`, the data appears *only* inside
-inner products, which can be replaced by a kernel `K(x_i, x_j)` without ever
-computing `phi`.
+written in terms of the multipliers $\alpha_i$, the data appears *only* inside
+inner products, which can be replaced by a kernel $K(x_i, x_j)$ without ever
+computing $\varphi$.
 
-```
-maximise  sum_i a_i - (1/2) sum_i sum_j a_i a_j y_i y_j K(x_i, x_j)
-```
+$$\max_{\alpha} \ \sum_{i=1}^{n} \alpha_i
+- \frac{1}{2} \sum_{i=1}^{n} \sum_{j=1}^{n}
+\alpha_i \alpha_j y_i y_j K(x_i, x_j)$$
+$$\text{subject to} \quad 0 \leq \alpha_i \leq C
+\quad \text{and} \quad \sum_{i=1}^{n} \alpha_i y_i = 0$$
 
 And here is the answer to my second question — what a prediction computes.
-There is no `w` to store any more, because it lives in a space we deliberately
+There is no $w$ to store any more, because it lives in a space we deliberately
 never visit. What gets stored are the support vectors and their multipliers:
 
-```
-f(x) = sum_i a_i y_i K(x_i, x) + b
-```
+$$f(x) = \sum_{i=1}^{n} \alpha_i y_i K(x_i, x) + b$$
 
 One kernel evaluation per support vector. Solving that dual with SMO gives a
 boundary no line could produce:
@@ -145,14 +145,14 @@ boundary no line could produce:
 
 ### Seeing the decision function itself
 
-Since `f(x)` is now a number attached to every point, it can be used as a
-height. Drawing each training point at `(x1, x2, f(x))` shows what the model
+Since $f(x)$ is now a number attached to every point, it can be used as a
+height. Drawing each training point at $(x_1, x_2, f(x))$ shows what the model
 really does with the circles:
 
 ![Every point at its decision value](figures/05_lifted_points.png)
 
-The boundary is where the cloud crosses `f = 0` — a curve in the input plane,
-not a region. The margin is the slab between `f = -1` and `f = +1`, and every
+The boundary is where the cloud crosses $f = 0$ — a curve in the input plane,
+not a region. The margin is the slab between $f = -1$ and $f = +1$, and every
 support vector lies inside it or exactly on its edges. Note the difference with
 the previous 3D figure: there the vertical axis was a coordinate of the feature
 space, here it is the *output* of the model, which is why the boundary and
@@ -166,24 +166,24 @@ implementations differ sharply on both.
 ![Training cost and sparsity](figures/06_complexity.png)
 
 The perceptron and the SGD soft margin are linear in the sample size. SMO is
-clearly superlinear: the Gram matrix alone is `n × n`. The hard margin QP looks
+clearly superlinear: the Gram matrix alone is $n \times n$. The hard margin QP looks
 flat, and that is not an accident — solved in the **primal**, its unknowns are
-just `w` and `b`, so its size barely depends on `n` at all. In the dual it
+just $w$ and $b$, so its size barely depends on $n$ at all. In the dual it
 would have one variable per training point. The primal is cheap when the data
 is low-dimensional and plentiful; the dual is the only one that admits kernels.
 
 Prediction splits the same way. A linear model compresses its training set into
-a single vector and answers with one dot product. A kernel model keeps part of
-its training set forever and consults it every time — on the same data,
-prediction is several orders of magnitude slower.
-
+a single vector and answers with one dot product, at cost $O(d)$. A kernel
+model keeps part of its training set forever and consults it every time, at
+cost $O(n_{SV} \cdot d)$ — on the same data, prediction is several orders of
+magnitude slower.
+ 
 What keeps that tractable is sparsity: only the support vectors are kept, a
 small fraction of the training set, and the right-hand panel shows their number
-growing far more slowly than `n`. This follows directly from the hinge loss
+growing far more slowly than $n$. This follows directly from the hinge loss
 being exactly zero beyond the margin, which forces most multipliers to zero. A
 kernelised logistic regression, whose loss never vanishes, would have to keep
 every single point.
-
 ---
 
 ## Running it
