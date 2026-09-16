@@ -105,7 +105,7 @@ This also explains why the hard margin here is solved as a constrained program
 and not by gradient descent: an objective that prices violations always has a
 finite minimum, so it can never tell you that a problem is infeasible.
 
-## Step 4 — The kernel trick, because a line is sometimes hopeless
+## Step 4 — The kernel trick, a line is sometimes hopeless
 
 No straight line separates two interleaved crescents. The soft margin does its
 honest best and plateaus:
@@ -125,11 +125,9 @@ written in terms of the multipliers $\alpha_i$, the data appears *only* inside
 inner products, which can be replaced by a kernel $K(x_i, x_j)$ without ever
 computing $\varphi$.
 
-$$\max_{\alpha} \ \sum_{i=1}^{n} \alpha_i
-- \frac{1}{2} \sum_{i=1}^{n} \sum_{j=1}^{n}
-\alpha_i \alpha_j y_i y_j K(x_i, x_j)$$
-$$\text{subject to} \quad 0 \leq \alpha_i \leq C
-\quad \text{and} \quad \sum_{i=1}^{n} \alpha_i y_i = 0$$
+$$
+\max_{\alpha} \ \sum_{i=1}^{n} \alpha_i - \frac{1}{2} \sum_{i=1}^{n} \sum_{j=1}^{n} \alpha_i \alpha_j y_i y_j K(x_i, x_j)
+$$
 
 And here is the answer to my second question — what a prediction computes.
 There is no $w$ to store any more, because it lives in a space we deliberately
