@@ -32,15 +32,12 @@ illustrated, with the failures shown.
 
 ---
 
-## Step 1 — The perceptron, and what it leaves undecided
+## Step 1 — The perceptron
 
-The update rule is the whole algorithm: while a point is misclassified, move
+The update rule : while a point is misclassified, move
 the hyperplane towards it.
 
-```
-w <- w + eta * y_i * x_i
-b <- b + eta * y_i
-```
+$$w \leftarrow w + \eta \, y_i x_i, \qquad b \leftarrow b + \eta \, y_i$$
 
 On separable data this terminates, and every point ends up correctly
 classified. But nothing in the rule refers to the *distance* between the
