@@ -30,7 +30,7 @@ the SVM at all?
 Answering that one required the whole sequence — hard margin, then soft margin,
 then the kernel trick — and each step turned out to be motivated by a concrete
 failure of the one before it. This repository is that sequence, implemented and
-illustrated, with the failures shown rather than asserted.
+illustrated, with the failures shown.
 
 ---
 
