@@ -1,27 +1,28 @@
+"""Common base class for the four classifiers."""
+
 import numpy as np
 
 
 class NotSeparableError(Exception):
-    """Raised when a hard-margin model cannot separate the data."""
+    """Raised when a hard margin model cannot separate the data."""
 
 
 class BaseClassifier:
+    """Shared interface. Labels are expected in {-1, +1}.
 
-    def __init__(self):
-        self.weights = None
-        self.bias = 0.0
+    project(X) returns the decision function f(x); predict(X) returns its
+    sign. The plots need f(x) itself, since the margins are its level sets.
+    """
 
     def fit(self, X, y):
-        raise NotImplementedError("fit() must be implemented by the subclass.")
+        raise NotImplementedError
 
-    def decision_function(self, X):
-        raise NotImplementedError(
-            "decision_function() must be implemented by the subclass."
-        )
+    def project(self, X):
+        raise NotImplementedError
 
     def predict(self, X):
-        # np.sign(0) == 0 would leave boundary points unclassified
-        return np.where(self.decision_function(X) >= 0, 1.0, -1.0)
+        # np.sign would return 0 on the boundary, which is not a label.
+        return np.where(self.project(X) >= 0, 1.0, -1.0)
 
     def score(self, X, y):
-        return float(np.mean(self.predict(X) == y))
+        return np.mean(self.predict(X) == y)

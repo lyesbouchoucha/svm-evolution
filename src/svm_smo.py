@@ -1,123 +1,158 @@
 """Kernel SVM: the dual problem solved by Sequential Minimal Optimization.
 
-    max_alpha  sum_i alpha_i - (1/2) sum_ij a_i a_j y_i y_j K(x_i, x_j)
-    s.t.       0 <= alpha_i <= C   and   sum_i alpha_i y_i = 0
+    maximise    sum_i a_i - (1/2) sum_ij a_i a_j y_i y_j K(x_i, x_j)
+    subject to  0 <= a_i <= C   and   sum_i a_i y_i = 0
 
-Why the dual: the data appears only through inner products, which can be
-replaced by K(x_i, x_j) without ever computing phi(x). That is what makes
-the RBF kernel usable, its feature space being infinite-dimensional. The
-soft margin alone would not justify the dual -- plain SGD on the hinge
-loss handles that in the linear case.
+    f(x) = sum_i a_i y_i K(x_i, x) + b
 
-Why two alphas at a time: the equality constraint sum_i alpha_i y_i = 0
-means a single alpha cannot move on its own. Two is the minimum, and for
-two the optimum has a closed form -- hence "minimal optimization".
+SMO repeatedly picks two multipliers violating the KKT conditions and sets
+them to their exact optimum, until none violates them. See the README for
+the derivation.
 """
 
 import numpy as np
 
 from src.base import BaseClassifier
-from src.kernels import linear_kernel
+from src.kernels import linear_kernel, polynomial_kernel, gaussian_kernel
 
 
 class KernelSVM(BaseClassifier):
-    """Dual SVM optimised by SMO (simplified version of Platt's algorithm).
+    """Dual SVM optimised by SMO (the simplified version of Platt's method).
 
-    C          : upper bound on the alphas (the soft margin parameter).
-    max_passes : stop after this many consecutive sweeps with no change.
-    max_iter   : hard cap, since max_passes is reset whenever an alpha
-                 moves and therefore does not bound the total work.
+    kernel      : 'linear', 'polynomial' or 'gaussian'
+    C           : upper bound on the multipliers (soft margin parameter)
+    tol         : tolerance on the KKT conditions
+    max_passes  : consecutive sweeps without any update before stopping
+    max_iter    : overall iteration limit, since max_passes is reset to zero
+                  whenever a multiplier moves
     """
 
-    def __init__(self, C=1.0, kernel=linear_kernel, tol=1e-3, max_passes=5,
-                 max_iter=100_000, random_state=None):
-        super().__init__()
-        self.C = C
+    def __init__(self, kernel='linear', C=1.0, gamma=1.0, degree=3, coef0=1.0,
+                 tol=1e-3, max_passes=5, max_iter=300000, random_state=None):
         self.kernel = kernel
+        self.C = C
+        self.gamma = gamma
+        self.degree = degree
+        self.coef0 = coef0
         self.tol = tol
         self.max_passes = max_passes
         self.max_iter = max_iter
         self.random_state = random_state
 
+    def compute_kernel(self, x1, x2):
+        if self.kernel == 'linear':
+            return linear_kernel(x1, x2)
+        if self.kernel == 'polynomial':
+            return polynomial_kernel(x1, x2, self.degree, self.coef0)
+        if self.kernel == 'gaussian':
+            return gaussian_kernel(x1, x2, self.gamma)
+        raise ValueError("kernel must be 'linear', 'polynomial' or 'gaussian'")
+
     def fit(self, X, y):
-        X = np.asarray(X, dtype=float)
-        y = np.asarray(y, dtype=float)
-        n = X.shape[0]
+        n_samples = X.shape[0]
 
-        self.X, self.y = X, y
-        self.alphas = np.zeros(n)
-        self.bias = 0.0
+        if self.random_state is not None:
+            np.random.seed(self.random_state)
 
-        K = self.kernel(X, X)          # Gram matrix, computed once
-        rng = np.random.default_rng(self.random_state)
+        self.X = X
+        self.y = y
+        self.alphas = np.zeros(n_samples)
+        self.b = 0.0
+
+        # Gram matrix, computed once: the loop below reuses it constantly.
+        K = np.zeros((n_samples, n_samples))
+        for i in range(n_samples):
+            for j in range(n_samples):
+                K[i, j] = self.compute_kernel(X[i], X[j])
+        self.K = K
+
         passes = 0
-        self.n_iter_ = 0
+        self.n_iter = 0
 
-        while passes < self.max_passes and self.n_iter_ < self.max_iter:
+        while passes < self.max_passes and self.n_iter < self.max_iter:
             changed = 0
 
-            for i in range(n):
-                self.n_iter_ += 1
-                E_i = (self.alphas * y) @ K[:, i] + self.bias - y[i]
+            for i in range(n_samples):
+                self.n_iter = self.n_iter + 1
+                error_i = np.sum(self.alphas * y * K[:, i]) + self.b - y[i]
 
-                # Does point i violate the KKT conditions?
-                if not ((y[i] * E_i < -self.tol and self.alphas[i] < self.C)
-                        or (y[i] * E_i > self.tol and self.alphas[i] > 0)):
-                    continue
+                # y_i * error_i equals y_i f(x_i) - 1, so these two tests
+                # detect a multiplier that violates the KKT conditions.
+                below_cap = self.alphas[i] < self.C and y[i] * error_i < -self.tol
+                above_zero = self.alphas[i] > 0 and y[i] * error_i > self.tol
 
-                j = rng.integers(n - 1)
-                if j >= i:
-                    j += 1             # uniform draw over [0, n) without i
-                E_j = (self.alphas * y) @ K[:, j] + self.bias - y[j]
+                if below_cap or above_zero:
+                    # Second point of the pair. Platt uses a heuristic; a
+                    # uniform draw is enough at this scale.
+                    j = np.random.randint(n_samples)
+                    while j == i:
+                        j = np.random.randint(n_samples)
 
-                a_i_old, a_j_old = self.alphas[i], self.alphas[j]
+                    error_j = np.sum(self.alphas * y * K[:, j]) + self.b - y[j]
+                    alpha_i_old = self.alphas[i]
+                    alpha_j_old = self.alphas[j]
 
-                # Bounds on alpha_j imposed by 0 <= alpha <= C together
-                # with sum_i alpha_i y_i = 0
-                if y[i] != y[j]:
-                    L = max(0.0, a_j_old - a_i_old)
-                    H = min(self.C, self.C + a_j_old - a_i_old)
-                else:
-                    L = max(0.0, a_i_old + a_j_old - self.C)
-                    H = min(self.C, a_i_old + a_j_old)
-                if L >= H:
-                    continue
+                    # Range left for a_j once the equality constraint and
+                    # the box 0 <= a <= C are both imposed.
+                    if y[i] != y[j]:
+                        low = max(0.0, alpha_j_old - alpha_i_old)
+                        high = min(self.C, self.C + alpha_j_old - alpha_i_old)
+                    else:
+                        low = max(0.0, alpha_i_old + alpha_j_old - self.C)
+                        high = min(self.C, alpha_i_old + alpha_j_old)
 
-                # Second derivative of the objective along the update
-                # direction; a non-negative value means no interior minimum
-                eta = 2.0 * K[i, j] - K[i, i] - K[j, j]
-                if eta >= 0:
-                    continue
+                    # Second derivative of the objective in a_j. It must be
+                    # strictly negative for an interior maximum to exist.
+                    eta = 2 * K[i, j] - K[i, i] - K[j, j]
 
-                self.alphas[j] = np.clip(a_j_old - y[j] * (E_i - E_j) / eta, L, H)
-                if abs(self.alphas[j] - a_j_old) < 1e-5:
-                    continue
+                    if low < high and eta < 0:
+                        alpha_j_new = alpha_j_old - y[j] * (error_i - error_j) / eta
+                        alpha_j_new = min(max(alpha_j_new, low), high)
 
-                # Keep sum_i alpha_i y_i unchanged
-                self.alphas[i] = a_i_old + y[i] * y[j] * (a_j_old - self.alphas[j])
+                        if abs(alpha_j_new - alpha_j_old) > 1e-5:
+                            self.alphas[j] = alpha_j_new
+                            # a_i absorbs the change, keeping sum a_i y_i = 0.
+                            self.alphas[i] = alpha_i_old + y[i] * y[j] * (
+                                alpha_j_old - alpha_j_new)
 
-                # Recentre the bias so that KKT holds for i and j
-                d_i = y[i] * (self.alphas[i] - a_i_old)
-                d_j = y[j] * (self.alphas[j] - a_j_old)
-                b_i = self.bias - E_i - d_i * K[i, i] - d_j * K[i, j]
-                b_j = self.bias - E_j - d_i * K[i, j] - d_j * K[j, j]
+                            # Bias that restores y f(x) = 1 for whichever
+                            # point has 0 < a < C; the midpoint if neither
+                            # does.
+                            delta_i = y[i] * (self.alphas[i] - alpha_i_old)
+                            delta_j = y[j] * (self.alphas[j] - alpha_j_old)
+                            b_i = (self.b - error_i - delta_i * K[i, i]
+                                   - delta_j * K[i, j])
+                            b_j = (self.b - error_j - delta_i * K[i, j]
+                                   - delta_j * K[j, j])
 
-                if 0 < self.alphas[i] < self.C:
-                    self.bias = b_i
-                elif 0 < self.alphas[j] < self.C:
-                    self.bias = b_j
-                else:
-                    self.bias = 0.5 * (b_i + b_j)
+                            if 0 < self.alphas[i] < self.C:
+                                self.b = b_i
+                            elif 0 < self.alphas[j] < self.C:
+                                self.b = b_j
+                            else:
+                                self.b = (b_i + b_j) / 2
 
-                changed += 1
+                            changed = changed + 1
 
-            passes = passes + 1 if changed == 0 else 0
+            if changed == 0:
+                passes = passes + 1
+            else:
+                passes = 0
 
-        self.converged_ = self.n_iter_ < self.max_iter
-        self.support_ = np.where(self.alphas > 1e-8)[0]
+        self.converged = self.n_iter < self.max_iter
+
+        # Points with a non-zero multiplier: the only ones f(x) depends on.
+        self.support = np.arange(n_samples)[self.alphas > 1e-8]
 
         return self
 
-    def decision_function(self, X):
-        K = self.kernel(self.X, np.asarray(X, dtype=float))   # (n_train, n_test)
-        return (self.alphas * self.y) @ K + self.bias
+    def project(self, X):
+        # Only the support vectors contribute to the sum.
+        values = np.zeros(len(X))
+        for k in range(len(X)):
+            total = 0.0
+            for i in self.support:
+                total = total + self.alphas[i] * self.y[i] * self.compute_kernel(
+                    self.X[i], X[k])
+            values[k] = total
+        return values + self.b
