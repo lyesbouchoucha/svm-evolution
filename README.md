@@ -6,7 +6,7 @@ margin SVM, and the kernel SVM trained by Sequential Minimal Optimization.
 
 ## How this project started
 
-It all started when I watched this[YouTube video](https://youtu.be/_PwhiWxHK8o) and finished it with two questions the
+It all started when I watched this [YouTube video](https://youtu.be/_PwhiWxHK8o) and finished it with two questions the
 video had not answered.
 
 The first was about the constraint itself. Every derivation writes
