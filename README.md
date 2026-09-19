@@ -35,7 +35,7 @@ illustrated, with the failures shown.
 The update rule : while a point is misclassified, move
 the hyperplane towards it.
 
-$$w \leftarrow w + \eta \, y_i x_i, \qquad b \leftarrow b + \eta \, y_i$$
+$$w \leftarrow w + y_i x_i, \qquad b \leftarrow b + y_i$$
 
 On separable data this terminates, and every point ends up correctly
 classified. But nothing in the rule refers to the *distance* between the
