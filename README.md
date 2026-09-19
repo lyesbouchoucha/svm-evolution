@@ -16,17 +16,15 @@ $$y_i (w \cdot x_i + b) \geq 1$$
 and moves on. Why `1`? Why a threshold at all, rather than simply asking that
 the points be on the correct side? The second question was about what happens
 after training. The video explained how the model is fitted, but not what a
-prediction actually computes — and for a kernel SVM, where no explicit `w`
-exists, that turns out to be the more interesting half of the story.
+prediction actually computes.
 
-Looking for answers took me backwards rather than forwards. I ended up reading
-about the perceptron, working through the linear algebra behind it and drawing
-what each iteration does to the vector `w` geometrically. That raised a third
-question: if the perceptron already finds a separating hyperplane, why invent
-the SVM at all?
+Looking for answers I ended up reading about the perceptron, working through 
+the linear algebra behind it and drawing what each iteration does to the vector 
+`w` geometrically. That raised a third question: if the perceptron already finds
+a separating hyperplane, why invent the SVM at all?
 
 Answering that one required the whole sequence — hard margin, then soft margin,
-then the kernel trick — and each step turned out to be motivated by a concrete
+then the kernel trick and each step turned out to be motivated by a concrete
 failure of the one before it. This repository is that sequence, implemented and
 illustrated, with the failures shown.
 
